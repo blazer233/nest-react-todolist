@@ -8,7 +8,6 @@ import {
   postDeltodos,
   postUpdatetodos,
   getFindtodos,
-  insertAddtodos,
 } from './http';
 
 interface Todo {
@@ -24,8 +23,6 @@ const App: React.FC = () => {
     manual,
     onSuccess: (res: any) => setTodos(res as Todo[]),
   });
-
-  useRequest(insertAddtodos);
 
   const { loading } = useRequest(getAlltodos, setList(false));
   const { loading: dl, run: deRun } = useRequest(postDeltodos, setList());
@@ -44,6 +41,7 @@ const App: React.FC = () => {
   const handleNewTodoSubmit = () => {
     if (!newTodo.trim()) return;
     adRun(newTodo);
+    setNewTodo('');
   };
 
   const handleTodoDelete = (id: string) => deRun(`${id}`);
@@ -73,7 +71,7 @@ const App: React.FC = () => {
           loading={al}
         />
         <Input
-          placeholder="模糊搜索"
+          placeholder="查询"
           size="small"
           value={search}
           allowClear
@@ -88,6 +86,12 @@ const App: React.FC = () => {
         bordered
         loading={loading || al || dl || pl || fl}
         dataSource={todos}
+        pagination={{
+          position: 'top',
+          align: 'end',
+          showSizeChanger: true,
+          pageSizeOptions: [5, 10, 20, 50],
+        }}
         renderItem={todo => (
           <List.Item
             actions={[
@@ -102,7 +106,11 @@ const App: React.FC = () => {
               </Button>,
             ]}
           >
-            {todo.content}
+            <span
+              style={{ textDecoration: todo.completed ? 'line-through' : '' }}
+            >
+              {todo.content}
+            </span>
           </List.Item>
         )}
       />

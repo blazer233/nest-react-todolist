@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "client": "cd ./client && npm run dev",
-    "server": "cd ./service && npm run start:dev",
+    "server": "cd ./service && npm run dev",
     "dev": "concurrently \"npm run client\" \"npm run server\""
   },
   "devDependencies": {
