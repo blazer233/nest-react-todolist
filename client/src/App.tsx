@@ -1,4 +1,4 @@
-import { useRequest } from 'ahooks';
+import { useDebounceFn, useRequest } from 'ahooks';
 import React, { useState } from 'react';
 import { Input, Button, List, Checkbox } from 'antd';
 
@@ -7,6 +7,8 @@ import {
   postAddtodos,
   postDeltodos,
   postUpdatetodos,
+  getFindtodos,
+  insertAddtodos,
 } from './http';
 
 interface Todo {
@@ -17,30 +19,30 @@ interface Todo {
 const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState<string>('');
-
-  const { loading } = useRequest(getAlltodos, {
-    onSuccess: res => setTodos(res as Todo[]),
-  });
-  const { loading: dl, run: deRun } = useRequest(postDeltodos, {
-    manual: true,
-    onSuccess: res => setTodos(res as Todo[]),
-  });
-  const { loading: al, run: adRun } = useRequest(postAddtodos, {
-    manual: true,
-    onSuccess: res => setTodos(res as Todo[]),
-  });
-  const { loading: pl, run: putRun } = useRequest(postUpdatetodos, {
-    manual: true,
-    onSuccess: res => setTodos(res as Todo[]),
+  const [search, setSearch] = useState<string>('');
+  const setList = (manual = true) => ({
+    manual,
+    onSuccess: (res: any) => setTodos(res as Todo[]),
   });
 
-  const handleNewTodoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useRequest(insertAddtodos);
+
+  const { loading } = useRequest(getAlltodos, setList(false));
+  const { loading: dl, run: deRun } = useRequest(postDeltodos, setList());
+  const { loading: al, run: adRun } = useRequest(postAddtodos, setList());
+  const { loading: fl, run: fdRun } = useRequest(getFindtodos, setList());
+  const { loading: pl, run: putRun } = useRequest(postUpdatetodos, setList());
+  const { run: debounceRun } = useDebounceFn(fdRun, { wait: 500 });
+
+  const handleNewTodoChange = (event: React.ChangeEvent<HTMLInputElement>) =>
     setNewTodo(event.target.value);
-  };
 
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+    debounceRun(event.target.value);
+  };
   const handleNewTodoSubmit = () => {
     if (!newTodo.trim()) return;
-    setNewTodo('');
     adRun(newTodo);
   };
 
@@ -53,32 +55,51 @@ const App: React.FC = () => {
   return (
     <div style={{ margin: '20px', textAlign: 'center' }}>
       <h1>Todo List</h1>
-      <Input
-        value={newTodo}
-        placeholder="Add todo..."
-        onChange={handleNewTodoChange}
-        style={{ width: '200px', marginRight: '10px' }}
-      />
-      <Button type="primary" onClick={handleNewTodoSubmit}>
-        Add
-      </Button>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <Input.Search
+          placeholder="Add todo..."
+          value={newTodo}
+          enterButton="添加"
+          onSearch={handleNewTodoSubmit}
+          onChange={handleNewTodoChange}
+          style={{ width: '500px', marginBottom: '20px' }}
+          size="large"
+          loading={al}
+        />
+        <Input
+          placeholder="模糊搜索"
+          size="small"
+          value={search}
+          allowClear
+          onChange={handleSearchChange}
+          style={{
+            width: '400px',
+          }}
+        />
+      </div>
       <List
         style={{ marginTop: '20px' }}
         bordered
-        loading={loading || al || dl || pl}
+        loading={loading || al || dl || pl || fl}
         dataSource={todos}
         renderItem={todo => (
           <List.Item
             actions={[
-              <Button type="link" onClick={() => handleTodoDelete(todo.id)}>
-                Delete
-              </Button>,
               <Checkbox
                 onChange={() => handleTodoToggle(todo)}
                 checked={todo.completed}
               >
-                Checkbox
+                done
               </Checkbox>,
+              <Button type="link" onClick={() => handleTodoDelete(todo.id)}>
+                Delete
+              </Button>,
             ]}
           >
             {todo.content}

@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TodoDto } from './dto/todo';
+
+import { HttpService } from '@nestjs/axios';
 import { Like, Repository } from 'typeorm';
 
 import { Todo } from './entities/todo.entity';
@@ -9,7 +11,17 @@ import { Todo } from './entities/todo.entity';
 export class TodoService {
   constructor(
     @InjectRepository(Todo) private readonly todo: Repository<Todo>,
-  ) {}
+    private readonly httpService: HttpService,
+  ) {
+    console.log('servive');
+  }
+
+  async insert() {
+    const res = await this.httpService.get(
+      'https://jsonplaceholder.typicode.com/todos',
+    );
+    return res;
+  }
 
   async create(createTodoDto: TodoDto) {
     return await this.todo.save(createTodoDto);

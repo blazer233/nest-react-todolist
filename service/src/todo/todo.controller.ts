@@ -4,7 +4,9 @@ import { TodoDto } from './dto/todo';
 
 @Controller('todo')
 export class TodoController {
-  constructor(private readonly todoService: TodoService) {}
+  constructor(private readonly todoService: TodoService) {
+    console.log('todoStart');
+  }
 
   @Get()
   async findAll() {
@@ -12,8 +14,13 @@ export class TodoController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.todoService.findOne(id);
+  findOne(@Param('id') contet: string) {
+    return this.todoService.findOne(contet);
+  }
+
+  @Get('/insert')
+  async insert() {
+    await this.todoService.insert();
   }
 
   @Post('/add')
