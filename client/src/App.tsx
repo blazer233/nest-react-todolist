@@ -1,121 +1,49 @@
-import { useDebounceFn, useRequest } from 'ahooks';
-import React, { useState } from 'react';
-import { Input, Button, List, Checkbox } from 'antd';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import TodoList from './todolist';
+import Editor from './editor';
+import { Button } from 'antd';
 
-import {
-  getAlltodos,
-  postAddtodos,
-  postDeltodos,
-  postUpdatetodos,
-  getFindtodos,
-} from './http';
-
-interface Todo {
-  id: string;
-  content: string;
-  completed: boolean;
-}
-const App: React.FC = () => {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [newTodo, setNewTodo] = useState<string>('');
-  const [search, setSearch] = useState<string>('');
-  const setList = (manual = true) => ({
-    manual,
-    onSuccess: (res: any) => setTodos(res as Todo[]),
-  });
-
-  const { loading } = useRequest(getAlltodos, setList(false));
-  const { loading: dl, run: deRun } = useRequest(postDeltodos, setList());
-  const { loading: al, run: adRun } = useRequest(postAddtodos, setList());
-  const { loading: fl, run: fdRun } = useRequest(getFindtodos, setList());
-  const { loading: pl, run: putRun } = useRequest(postUpdatetodos, setList());
-  const { run: debounceRun } = useDebounceFn(fdRun, { wait: 500 });
-
-  const handleNewTodoChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setNewTodo(event.target.value);
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-    debounceRun(event.target.value);
-  };
-  const handleNewTodoSubmit = () => {
-    if (!newTodo.trim()) return;
-    adRun(newTodo);
-    setNewTodo('');
-  };
-
-  const handleTodoDelete = (id: string) => deRun(`${id}`);
-
-  const handleTodoToggle = (item: any) => {
-    item.completed = !item.completed;
-    putRun(item);
-  };
+const routes = [
+  { path: '/', redirect: '/home' },
+  { path: '/home', Component: TodoList, name: 'Todolist' },
+  { path: '/editor', Component: Editor, name: 'rich text' },
+];
+const AppRouter = () => {
+  const navigate = useNavigate();
   return (
-    <div style={{ margin: '20px', textAlign: 'center' }}>
-      <h1>Todo List</h1>
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Input.Search
-          placeholder="Add todo..."
-          value={newTodo}
-          enterButton="添加"
-          onSearch={handleNewTodoSubmit}
-          onChange={handleNewTodoChange}
-          style={{ width: '500px', marginBottom: '20px' }}
-          size="large"
-          loading={al}
-        />
-        <Input
-          placeholder="查询"
-          size="small"
-          value={search}
-          allowClear
-          onChange={handleSearchChange}
-          style={{
-            width: '400px',
-          }}
-        />
-      </div>
-      <List
-        style={{ marginTop: '20px' }}
-        bordered
-        loading={loading || al || dl || pl || fl}
-        dataSource={todos}
-        pagination={{
-          position: 'top',
-          align: 'end',
-          showSizeChanger: true,
-          pageSizeOptions: [5, 10, 20, 50],
-        }}
-        renderItem={todo => (
-          <List.Item
-            actions={[
-              <Checkbox
-                onChange={() => handleTodoToggle(todo)}
-                checked={todo.completed}
-              >
-                done
-              </Checkbox>,
-              <Button type="link" onClick={() => handleTodoDelete(todo.id)}>
-                Delete
-              </Button>,
-            ]}
-          >
-            <span
-              style={{ textDecoration: todo.completed ? 'line-through' : '' }}
+    <>
+      {routes.map(
+        (i, idx) =>
+          i.name && (
+            <Button
+              onClick={() => navigate(i.path)}
+              key={idx}
+              style={{ margin: '12px' }}
             >
-              {todo.content}
-            </span>
-          </List.Item>
-        )}
-      />
-    </div>
+              {i.name}
+            </Button>
+          )
+      )}
+      <Routes>
+        {routes.map((i, idx) => {
+          const { redirect, path, Component } = i;
+          if (redirect) {
+            return (
+              <Route
+                key={idx}
+                path={path}
+                element={<Navigate to={redirect} replace />}
+              />
+            );
+          }
+          if (Component) {
+            return <Route key={idx} path={path} element={<Component />} />;
+          }
+          return null;
+        })}
+      </Routes>
+    </>
   );
 };
 
-export default App;
+export default AppRouter;
