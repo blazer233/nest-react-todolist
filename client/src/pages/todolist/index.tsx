@@ -7,7 +7,7 @@ import {
   postDeltodos,
   postUpdatetodos,
   getFindtodos,
-} from './http';
+} from '../../http';
 
 interface Todo {
   id: string;

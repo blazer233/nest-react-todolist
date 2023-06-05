@@ -1,49 +1,29 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import TodoList from './todolist';
-import Editor from './editor';
+import { useNavigate, useRoutes } from 'react-router-dom';
+import React, { Key } from 'react';
+import { routes } from './routes';
 import { Button } from 'antd';
 
-const routes = [
-  { path: '/', redirect: '/home' },
-  { path: '/home', Component: TodoList, name: 'Todolist' },
-  { path: '/editor', Component: Editor, name: 'rich text' },
-];
-const AppRouter = () => {
+export default () => {
   const navigate = useNavigate();
+  const routing = useRoutes(routes);
   return (
     <>
       {routes.map(
-        (i, idx) =>
-          i.name && (
+        (i: any, idx: Key) =>
+          i.menu && (
             <Button
+              type="primary"
               onClick={() => navigate(i.path)}
               key={idx}
               style={{ margin: '12px' }}
             >
-              {i.name}
+              MENU_{i.menu}
             </Button>
           )
       )}
-      <Routes>
-        {routes.map((i, idx) => {
-          const { redirect, path, Component } = i;
-          if (redirect) {
-            return (
-              <Route
-                key={idx}
-                path={path}
-                element={<Navigate to={redirect} replace />}
-              />
-            );
-          }
-          if (Component) {
-            return <Route key={idx} path={path} element={<Component />} />;
-          }
-          return null;
-        })}
-      </Routes>
+      <React.Suspense fallback={<div>Loading...</div>}>
+        {routing}
+      </React.Suspense>
     </>
   );
 };
-
-export default AppRouter;
