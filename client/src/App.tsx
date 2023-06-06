@@ -1,23 +1,23 @@
 import { useNavigate, useRoutes } from 'react-router-dom';
 import React, { Key } from 'react';
-import { routes } from './routes';
+import { routesAll } from './routes';
 import { Button } from 'antd';
 
 export default () => {
   const navigate = useNavigate();
-  const routing = useRoutes(routes);
+  const routing = useRoutes(routesAll);
   return (
     <>
-      {routes.map(
+      {routesAll.map(
         (i: any, idx: Key) =>
-          i.menu && (
+          i.routePath && (
             <Button
               type="primary"
               onClick={() => navigate(i.path)}
               key={idx}
               style={{ margin: '12px' }}
             >
-              MENU_{i.menu}
+              MENU_{i.routePath}
             </Button>
           )
       )}

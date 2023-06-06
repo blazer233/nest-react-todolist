@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Editor,
   EditorState,
@@ -9,14 +10,28 @@ import {
   DraftEditorCommand,
 } from 'draft-js';
 import 'draft-js/dist/Draft.css';
+import { Outlet } from 'react-router-dom';
 import { Button } from 'antd';
 import { useMount, useLocalStorageState } from 'ahooks';
+import { routesAll } from '../../routes';
 
+const BUTTONS = [
+  'BOLD',
+  'ITALIC',
+  'UNDERLINE',
+  'unordered-list-item',
+  'ordered-list-item',
+  'code-block',
+  'header-one',
+  'header-two',
+  'blockquote',
+];
 const KEY = 'rich-text-edit';
-const RichTextEditor: React.FC = () => {
+const RichTextEditor: React.FC<{ routePath: string }> = ({ routePath }) => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [message, setMessage] = useLocalStorageState<string | undefined>(KEY);
   const editor = useRef<Editor>(null);
+  const navigate = useNavigate();
 
   const convertContentToJSON = (): string => {
     const contentState = editorState.getCurrentContent();
@@ -45,24 +60,10 @@ const RichTextEditor: React.FC = () => {
     const newState = RichUtils.toggleInlineStyle(editorState, inlineStyle);
     setEditorState(newState);
   };
-  const toggleBlockType = (blockType: string) => {
-    const newState = RichUtils.toggleBlockType(editorState, blockType);
-    setEditorState(newState);
-  };
-  const buttons = [
-    'BOLD',
-    'ITALIC',
-    'UNDERLINE',
-    'unordered-list-item',
-    'ordered-list-item',
-    'code-block',
-    'header-one',
-    'header-two',
-    'blockquote',
-  ];
+  console.log(routesAll);
   return (
     <div>
-      {buttons.map((i, idx) => (
+      {BUTTONS.map((i, idx) => (
         <Button
           key={idx}
           onClick={toggleInlineStyle.bind(null, i)}
@@ -81,6 +82,14 @@ const RichTextEditor: React.FC = () => {
       <Button onClick={() => loadContentFromJSON('your-json-string')}>
         Load
       </Button>
+      {routesAll
+        .find(i => i.path === `/${routePath}`)
+        .children.map((i: any, idx: number) => (
+          <Button key={idx} onClick={() => navigate(i.path)} type="link">
+            {i.routePath}
+          </Button>
+        ))}
+      <Outlet />
     </div>
   );
 };

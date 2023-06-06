@@ -1,22 +1,51 @@
-import { RouteObject, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import React from 'react';
-const redirectRoute = [{ path: '/', element: <Navigate to="/todolist" /> }];
-const pageModules = import.meta.glob('./pages/**/*.tsx');
+export interface IRouter {
+  path: string;
+  element: React.ReactElement;
+  routePath?: string;
+  children?: IRouter[];
+}
 
-export const routes: RouteObject[] = Object.entries(pageModules)
-  .map(([path, loadPage]) => {
+const redirectRoute: IRouter[] = [
+  { path: '/', element: <Navigate to="/todolist" /> },
+];
+
+const pageModules = import.meta.glob('./pages/**/index.tsx');
+
+const createRoute = (routePath: string, path: string, child = false) => ({
+  path: child ? routePath : `/${routePath}`,
+  element: React.createElement(
+    React.lazy(() =>
+      pageModules[path]().then((module: any) => ({
+        default: module.default,
+      }))
+    ),
+    { routePath }
+  ),
+  routePath,
+  children: [],
+});
+const tmp: Record<string, any> = {};
+Object.keys(pageModules)
+  .sort((a, b) => {
+    const aCount = (a.match(/\//g) || []).length;
+    const bCount = (b.match(/\//g) || []).length;
+    return aCount - bCount;
+  })
+  .forEach(path => {
     const routePath = path
       .replace(/^\.\/pages\//, '')
       .replace(/\.tsx$/, '')
       .replace(/\/index$/, '');
-    const LazyComponent = React.lazy(() =>
-      loadPage().then((module: any) => ({ default: module.default }))
-    );
-    return {
-      path: `/${routePath}`,
-      element: <LazyComponent />,
-      ...(path.endsWith('index.tsx') && { menu: routePath }),
-    };
-  })
-  .concat(redirectRoute)
+    if (routePath.split('/').length == 1) {
+      tmp[routePath] = createRoute(routePath, path);
+    } else {
+      const [firstPath, child] = routePath.split('/');
+      tmp[firstPath].children.push(createRoute(child, path, true));
+    }
+  });
+console.log(tmp, 333);
+export const routesAll = Object.values(tmp)
+  .concat(redirectRoute as never)
   .reverse();
